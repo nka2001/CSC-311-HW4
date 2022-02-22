@@ -5,17 +5,17 @@ public class VideoGame {
     
     private String title;
     private double price;
-    private String esrbRate;
+    private String esrb;
     
     public VideoGame(){//default constructor
         this.title = "default";//sets all three member variables to default values
         this.price = 0.00;
-        this.esrbRate = "n/a";
+        this.esrb = "n/a";
     }
     public VideoGame(String t, double p, String r){//overloaded constructor 
         this.title = t;
         this.price = p;
-        this.esrbRate = r;
+        this.esrb = r;
     }
     public void setTitle(String t){//setters, they set the values 
         this.title = t;
@@ -24,7 +24,7 @@ public class VideoGame {
         this.price = p;
     }
     public void setEsrbRating(String r){
-        this.esrbRate = r;
+        this.esrb = r;
     }
     public String getTitle(){//getters, they return values
         return this.title;
@@ -33,6 +33,10 @@ public class VideoGame {
         return this.price;
     }
     public String getRating(){
-        return this.esrbRate;
+        return this.esrb;
+    }
+    public String toString(){
+        String str = title + ", "+ price + ", " + esrb;
+        return str;
     }
 }
