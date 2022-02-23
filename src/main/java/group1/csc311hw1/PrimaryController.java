@@ -23,32 +23,32 @@ import javafx.scene.control.TextField;
 public class PrimaryController {
 
     @FXML
-    private ListView<String> listView;
+    private ListView<String> listView;//listview to display database
     @FXML
-    private TextField textField;
+    private TextField textField;//textfield for showing record count
     @FXML
-    private Button loadFrom;
+    private Button loadFrom;//button to load from the database
     @FXML
-    private MenuItem loadFromJSON;
+    private MenuItem loadFromJSON;//menu item to load from JSON file
     @FXML
-    private MenuItem menuClose;
+    private MenuItem menuClose;//menu item to close program
     
-    private ObservableList<String> i; 
+    private ObservableList<String> i; //obervable list for listview
 
     @FXML
-    private void loadFromDB(ActionEvent event) throws SQLException {
+    private void loadFromDB(ActionEvent event) throws SQLException {//this will load the listview with data from the access database 
         i = listView.getItems();
-        i.clear();
+        i.clear();//this will clear the listview 
 
-        textField.setText("0");
+        textField.setText("0");//sets the record count to 0
 
-        textField.setText(Integer.toString(i.size()));
+        textField.setText(Integer.toString(i.size()));//this sets the textfield to whatever the record count is 
 
-        retrieveData(i);
+        retrieveData(i);//calls the retrieve data method to populate the listview 
 
-        textField.setText(Integer.toString(i.size()));
+        textField.setText(Integer.toString(i.size()));//record count is updated
 
-        deleteList();
+         
 
     }
 
@@ -85,7 +85,8 @@ public class PrimaryController {
 
     @FXML
     private void loadFromJSON(ActionEvent event) throws SQLException, FileNotFoundException {
-
+        
+      
         deleteList();
         
         
@@ -105,7 +106,7 @@ public class PrimaryController {
             b.setPrettyPrinting();
             Gson gson = b.create();
 
-            FileReader fr = new FileReader("C:\\Users\\nicka\\Documents\\NetBeansProjects\\CSC-311-HW-1\\src\\main\\java\\group1\\csc311hw1\\games.json");
+            FileReader fr = new FileReader("C:\\Users\\soblab\\Documents\\NetBeansProjects\\CSC-311-HW-1\\src\\main\\java\\group1\\csc311hw1\\games.json");
             VideoGame[] vg = gson.fromJson(fr, VideoGame[].class); // reads from the JSON file and put the output into an array of videogame objects
 
             for (int k = 0; k < vg.length; k++) {
@@ -166,10 +167,6 @@ public class PrimaryController {
         } finally {
             c.close();
         }
-
-    }
-
-    public void addtoDB() {
 
     }
 }
