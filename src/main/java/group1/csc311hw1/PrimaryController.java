@@ -11,190 +11,166 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 
 /**
- * GUI class, contains the methods to load data from a database, and load data from a JSON file into a database, and to display the data from the database 
+ * GUI class, contains the methods to load data from a database, and load data
+ * from a JSON file into a database, and to display the data from the database
+ *
  * @author nicka
  */
 public class PrimaryController {
 
     @FXML
-    private ListView<String> listView;//listview to display database
+    private ListView<String> listView;
     @FXML
-    private TextField textField;//textfield for showing record count
+    private TextField fullName;
     @FXML
-    private Button loadFrom;//button to load from the database
+    private TextField BirthDate;
     @FXML
-    private MenuItem loadFromJSON;//menu item to load from JSON file
+    private Label totalLabel;
     @FXML
-    private MenuItem menuClose;//menu item to close program
-    
-    private ObservableList<String> i; //obervable list for listview
+    private Button checkOutButton;
+    @FXML
+    private ListView<String> cart;
 
-   
+    private ObservableList<String> i;
+
+    private ObservableList<String> cartList;
     @FXML
-     /**
-     * loads data from the database when the button is clicked, retrieveData is called to retrieve the data from the database 
+    private DatePicker d1;
+    @FXML
+    private DatePicker d2;
+
+    private String startDate;
+    private String endDate;
+
+    private ArrayList<Integer> hold = new ArrayList<Integer>();
+
+    /**
+     * this method will do the checkout and process the total price, this is
+     * considered a long operation so a thread will be used to keep the GUI from
+     * hanging, as well as write to the database the information the user
+     * entered
+     *
      * @param event
-     * @throws SQLException 
      */
-    private void loadFromDB(ActionEvent event) throws SQLException {//this will load the listview with data from the access database 
+    @FXML
+    private void doCheckout(ActionEvent event) {
+
+        System.out.println(startDate + " === " + endDate);
+    }
+
+    public void initialize() throws SQLException {
         i = listView.getItems();
-        i.clear();//this will clear the listview 
+        i.clear();
 
-        textField.setText("0");//sets the record count to 0
-
-        textField.setText(Integer.toString(i.size()));//this sets the textfield to whatever the record count is 
-
-        retrieveData(i);//calls the retrieve data method to populate the listview 
-
-        textField.setText(Integer.toString(i.size()));//record count is updated
-
-         
+        Thread t = new Thread(() -> loadDatabase(i));
+        t.start();
 
     }
+
     /**
-     * retrieves data from the database and displays the contents in the listview
-     * @param i (observableList of type string)
-     * @throws SQLException 
+     * this method loads the list view so users can shop from them, this is
+     * considered a long operation and a thread is used to cause the GUI not to
+     * "hang"
+     *
+     * @param i
      */
+    public void loadDatabase(ObservableList<String> i) throws SQLException {
 
-    public void retrieveData(ObservableList<String> i) throws SQLException {
-
-        String dburl = "";
+        String dbUrl = "";
         Connection c = null;
 
         try {
-            dburl = "jdbc:ucanaccess://.//Game.accdb";
-            c = DriverManager.getConnection(dburl);
+            dbUrl = "jdbc:ucanaccess://.//HW4DB.accdb";
+            c = DriverManager.getConnection(dbUrl);
 
             System.out.println("connected");
 
-            String tableName = "VideoGames";
+            String tableName = "Products";
             Statement stmt = c.createStatement();
             ResultSet r = stmt.executeQuery("select * from " + tableName);
 
             while (r.next()) {
                 int id = r.getInt("ID");
-                String title = r.getString("Title");
-                String rate = r.getString("Esrb");
-                double price = r.getDouble("Price");
+                String product = r.getString("Product Name");
+                String RentalPrice = r.getString("Rental Price");
+                String IsAvailable = r.getString("Is Available");
 
-                i.add(title + ", " + price + ", " + rate);
+                i.add(id + ", " + product + ", " + RentalPrice + ", " + IsAvailable);
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+
         } finally {
             c.close();
         }
+
     }
 
-    
+    @FXML
+    private void handleOnMouseClicked(MouseEvent event) {
+
+        ObservableList<String> ov = listView.getItems();
+        cartList = cart.getItems();
+
+        int selectedIndex = listView.getSelectionModel().getSelectedIndex();
+
+        if (selectedIndex >= 0 && selectedIndex < ov.size() && !(cartList.contains(ov.get(selectedIndex)))) {
+            cartList.add(ov.get(selectedIndex));
+            hold.add(selectedIndex);
+
+        }
+
+    }
+
+    @FXML
+    private void retrunDate(ActionEvent event) {
+
+        startDate = d1.getValue().toString();
+
+    }
+
     /**
-     * LoadFromJSON will load data into the database from a JSON file 
+     * this method gets the end date from the date picker, it checks to make
+     * sure the date selected is not less than the start date
+     *
      * @param event
-     * @throws SQLException
-     * @throws FileNotFoundException 
      */
     @FXML
-    private void loadFromJSON(ActionEvent event) throws SQLException, FileNotFoundException {
-        
-      
-        deleteList();
-        
-        
+    private void retrurnDate2(ActionEvent event) {
 
-        textField.setText("0");
-
-        String dburl = "";
-        Connection c = null;
-
-        try {
-            dburl = "jdbc:ucanaccess://.//Game.accdb";
-            c = DriverManager.getConnection(dburl);
-
-            System.out.println("connected");
-
-            GsonBuilder b = new GsonBuilder();
-            b.setPrettyPrinting();
-            Gson gson = b.create();
-
-            FileReader fr = new FileReader("games.json");
-            VideoGame[] vg = gson.fromJson(fr, VideoGame[].class); // reads from the JSON file and put the output into an array of videogame objects
-
-            for (int k = 0; k < vg.length; k++) {
-
-                String sql = "INSERT INTO VideoGames (Title,Price,Esrb) VALUES (?,?,?)";
-
-                PreparedStatement ps = c.prepareStatement(sql);
-
-                ps.setString(1, vg[k].getTitle());
-                ps.setDouble(2, vg[k].getPrice());
-                ps.setString(3, vg[k].getRating());
-
-                int row = ps.executeUpdate();
-
-                if (row > 0) {
-                    System.out.println("added");
-                }
-
-            }
+        if (d2.getValue().compareTo(d1.getValue()) < 1) {
+            makeDateAlert();
             
-            
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            c.close();
+        } else {
+            endDate = d2.getValue().toString();
         }
-    }
-    /**
-     * closes the program upon clicking the menu item close 
-     * @param event 
-     */
-    @FXML
-    private void CloseHW(ActionEvent event
-    ) {//close method, upon clicking from the menu drop down "Close" it will cause the program to stop runnning
-
-        Platform.exit();//closes the window 
-        System.exit(0);
 
     }
-/**
- * deletes the entire database, this is needed so no duplicates are added to the database, the listview is not updtaed when this happens
- * @throws SQLException 
- */
-    public void deleteList() throws SQLException {
+
+    private void makeDateAlert() {
+
+        Alert a = new Alert(AlertType.INFORMATION);
+        a.setTitle("Error Incorrect Date Selected");
+        a.setHeaderText("You selected a date that is before the start date");
+        a.showAndWait();
         
         
-        
-        String dburl = "";
-        Connection c = null;
-
-        try {
-            dburl = "jdbc:ucanaccess://.//Game.accdb";
-            c = DriverManager.getConnection(dburl);
-
-            System.out.println("connected");
-
-            Statement st = c.createStatement();
-
-            st.executeUpdate("DELETE FROM VideoGames");
-            System.out.println("deleted");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            c.close();
-        }
 
     }
 }
